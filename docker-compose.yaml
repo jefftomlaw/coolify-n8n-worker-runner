@@ -5,7 +5,6 @@ services:
   # 1. n8n Main (Editor & Webhooks)
   # ----------------------------------------
   n8n:
-    # Use 'build: .' to use your custom Dockerfile in the repo root
     build: .
     restart: always
     environment:
@@ -14,7 +13,7 @@ services:
       - WEBHOOK_URL=${SERVICE_URL_N8N}
       - N8N_HOST=${SERVICE_URL_N8N}
       
-      # Database: Pointing to INTERNAL Postgres Service using Env Vars
+      # Database
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgresql
       - DB_POSTGRESDB_PORT=5432
@@ -22,12 +21,12 @@ services:
       - DB_POSTGRESDB_USER=${POSTGRES_USER:-n8n}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
       
-      # Queue Mode Configuration
+      # Queue Mode
       - EXECUTIONS_MODE=queue
       - QUEUE_BULL_REDIS_HOST=redis
       - QUEUE_HEALTH_CHECK_ACTIVE=true
       
-      # Security & Settings
+      # Security
       - N8N_ENCRYPTION_KEY=${SERVICE_PASSWORD_ENCRYPTION}
       - N8N_Block_ENV_ACCESS_IN_NODE=${N8N_BLOCK_ENV_ACCESS_IN_NODE:-true}
       
@@ -45,15 +44,13 @@ services:
       retries: 10
 
   # ----------------------------------------
-  # 2. n8n Worker (High Performance)
+  # 2. n8n Worker
   # ----------------------------------------
   n8n-worker:
-    # Uses the same custom Dockerfile
     build: .
     command: worker
     restart: always
     environment:
-      # Database: Must match Main
       - DB_TYPE=postgresdb
       - DB_POSTGRESDB_HOST=postgresql
       - DB_POSTGRESDB_PORT=5432
@@ -61,12 +58,11 @@ services:
       - DB_POSTGRESDB_USER=${POSTGRES_USER:-n8n}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
       
-      # Queue Config
       - EXECUTIONS_MODE=queue
       - QUEUE_BULL_REDIS_HOST=redis
       - N8N_ENCRYPTION_KEY=${SERVICE_PASSWORD_ENCRYPTION}
       
-      # --- TUNING FOR 64GB RAM & CORES ---
+      # TUNING: This single worker will now handle 50 concurrent jobs
       - N8N_CONCURRENCY_PRODUCTION_LIMIT=50
       
     volumes:
@@ -78,11 +74,10 @@ services:
         condition: service_healthy
       postgresql:
         condition: service_healthy
-    deploy:
-      replicas: 2
+    # REMOVED: deploy/replicas block to fix the Coolify error
 
   # ----------------------------------------
-  # 3. Redis (Required Internal Broker)
+  # 3. Redis
   # ----------------------------------------
   redis:
     image: redis:6-alpine
@@ -96,7 +91,7 @@ services:
       retries: 10
 
   # ----------------------------------------
-  # 4. PostgreSQL (Internal Database)
+  # 4. PostgreSQL
   # ----------------------------------------
   postgresql:
     image: postgres:16-alpine

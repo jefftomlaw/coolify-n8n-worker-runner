@@ -26,9 +26,14 @@ services:
       - QUEUE_BULL_REDIS_HOST=redis
       - QUEUE_HEALTH_CHECK_ACTIVE=true
       
-      # Security
+      # Security & Settings
       - N8N_ENCRYPTION_KEY=${SERVICE_PASSWORD_ENCRYPTION}
       - N8N_Block_ENV_ACCESS_IN_NODE=${N8N_BLOCK_ENV_ACCESS_IN_NODE:-true}
+      
+      # Timezone
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-America/Chicago}
+      - TZ=${TZ:-America/Chicago}
+      - N8N_RUNNERS_ENABLED=true
       
     volumes:
       - n8n-data:/home/node/.n8n
@@ -44,7 +49,7 @@ services:
       retries: 10
 
   # ----------------------------------------
-  # 2. n8n Worker
+  # 2. n8n Worker #1
   # ----------------------------------------
   n8n-worker:
     build: .
@@ -57,14 +62,13 @@ services:
       - DB_POSTGRESDB_DATABASE=${POSTGRES_DB:-n8n}
       - DB_POSTGRESDB_USER=${POSTGRES_USER:-n8n}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
-      
       - EXECUTIONS_MODE=queue
       - QUEUE_BULL_REDIS_HOST=redis
       - N8N_ENCRYPTION_KEY=${SERVICE_PASSWORD_ENCRYPTION}
-      
-      # TUNING: This single worker will now handle 50 concurrent jobs
       - N8N_CONCURRENCY_PRODUCTION_LIMIT=50
-      
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-America/Chicago}
+      - TZ=${TZ:-America/Chicago}
+      - N8N_RUNNERS_ENABLED=true
     volumes:
       - n8n-data:/home/node/.n8n
     depends_on:
@@ -74,14 +78,47 @@ services:
         condition: service_healthy
       postgresql:
         condition: service_healthy
-    # REMOVED: deploy/replicas block to fix the Coolify error
 
   # ----------------------------------------
-  # 3. Redis
+  # 3. n8n Worker #2 (Manual Scaling)
+  # ----------------------------------------
+  n8n-worker-2:
+    build: .
+    command: worker
+    restart: always
+    environment:
+      # Exact same config as Worker 1
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgresql
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB:-n8n}
+      - DB_POSTGRESDB_USER=${POSTGRES_USER:-n8n}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+      - EXECUTIONS_MODE=queue
+      - QUEUE_BULL_REDIS_HOST=redis
+      - N8N_ENCRYPTION_KEY=${SERVICE_PASSWORD_ENCRYPTION}
+      - N8N_CONCURRENCY_PRODUCTION_LIMIT=50
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-America/Chicago}
+      - TZ=${TZ:-America/Chicago}
+      - N8N_RUNNERS_ENABLED=true
+    volumes:
+      - n8n-data:/home/node/.n8n
+    depends_on:
+      n8n:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      postgresql:
+        condition: service_healthy
+
+  # ----------------------------------------
+  # 4. Redis
   # ----------------------------------------
   redis:
     image: redis:6-alpine
     restart: always
+    sysctls:
+      - vm.overcommit_memory=1
     volumes:
       - redis-data:/data
     healthcheck:
@@ -91,7 +128,7 @@ services:
       retries: 10
 
   # ----------------------------------------
-  # 4. PostgreSQL
+  # 5. PostgreSQL
   # ----------------------------------------
   postgresql:
     image: postgres:16-alpine
@@ -100,10 +137,11 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-n8n}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=${POSTGRES_DB:-n8n}
+      - TZ=America/Chicago
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - postgres-data-v2:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -U ${POSTGRES_USER:-n8n}"]
+      test: ["CMD-SHELL", "pg_isready -h localhost -U n8n"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -111,4 +149,4 @@ services:
 volumes:
   n8n-data:
   redis-data:
-  postgres-data:
+  postgres-data-v2:

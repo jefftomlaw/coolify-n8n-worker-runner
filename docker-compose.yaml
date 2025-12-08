@@ -20,20 +20,20 @@ services:
     restart: always
     environment:
       - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=postgres
-      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_HOST=${POSTGRES_HOST}
+      - DB_POSTGRESDB_PORT=${POSTGRES_PORT}
       - DB_POSTGRESDB_DATABASE=n8n
-      - DB_POSTGRESDB_USER=n8n
-      - DB_POSTGRESDB_PASSWORD=CHANGE_THIS_PASSWORD
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
       
-      - N8N_ENCRYPTION_KEY=CHANGE_THIS_TO_A_LONG_RANDOM_STRING
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       
       - EXECUTIONS_MODE=queue
       - QUEUE_BULL_REDIS_HOST=redis
       - QUEUE_BULL_REDIS_PORT=6379
       
-      - N8N_HOST=${COOLIFY_URL} # Coolify injects this automatically
-      - WEBHOOK_URL=https://${COOLIFY_URL}/
+      - N8N_HOST=${N8N_HOST} 
+      - WEBHOOK_URL=https://${N8N_HOST}/
       
     ports:
       - "5678:5678"
@@ -54,13 +54,13 @@ services:
     command: /docker-entrypoint.sh worker
     environment:
       - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=postgres
-      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_HOST=${POSTGRES_HOST}
+      - DB_POSTGRESDB_PORT=${POSTGRES_PORT}
       - DB_POSTGRESDB_DATABASE=n8n
-      - DB_POSTGRESDB_USER=n8n
-      - DB_POSTGRESDB_PASSWORD=CHANGE_THIS_PASSWORD
+      - DB_POSTGRESDB_USER=${POSTGRES_USER}
+      - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
       
-      - N8N_ENCRYPTION_KEY=CHANGE_THIS_TO_A_LONG_RANDOM_STRING
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       
       - EXECUTIONS_MODE=queue
       - QUEUE_BULL_REDIS_HOST=redis

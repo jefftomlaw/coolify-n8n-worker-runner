@@ -1,5 +1,5 @@
 # Change the base image to the Task Runner
-FROM n8nio/n8n-task-runners:beta
+FROM n8nio/runners
 
 USER root
 

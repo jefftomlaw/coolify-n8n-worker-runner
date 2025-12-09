@@ -1,11 +1,10 @@
-# Change the base image to the Task Runner
 FROM n8nio/runners
 
 USER root
 
-# 1. Install System Tools & Build Dependencies
-# Removed 'python3', 'py3-pip' as the runner image provides these.
-# Kept 'py3-pillow' as it often relies on system-level jpeg/zlib libraries.
+# 1. Install System Tools, Build Dependencies & Package Managers
+# Added 'nodejs' and 'npm' explicitly so we can install global packages.
+# Added 'python3' and 'py3-pip' to ensure pip is available for step 3.
 RUN apk add --no-cache \
     curl \
     poppler-utils \
@@ -19,15 +18,18 @@ RUN apk add --no-cache \
     py3-pillow \
     tesseract-ocr \
     tesseract-ocr-data-eng \
-    tesseract-ocr-data-spa
+    tesseract-ocr-data-spa \
+    nodejs \
+    npm \
+    python3 \
+    py3-pip
 
 # 2. Install NPM packages globally
-# The runner handles Node execution, so these must be installed here.
 RUN npm install -g pdf-lib pdf-img-convert pdf-parse tesseract.js
 
-# 3. Install Python Libraries
-# Use the pip provided by the runner environment
-RUN pip install markitdown --break-system-packages
+# 3. Install the Python Libraries
+# using pip3 to match the apk installed python
+RUN pip3 install markitdown --break-system-packages
 
-# Switch back to the limited user
+# Switch back to node user
 USER node

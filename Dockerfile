@@ -1,10 +1,11 @@
-FROM docker.n8n.io/n8nio/n8n:beta
+# Change the base image to the Task Runner
+FROM n8nio/n8n-task-runners:beta
 
 USER root
 
-# 1. Install System Tools, Build Dependencies & Python
-# Added 'py3-pillow' to the end of the list:
-# This installs the pre-compiled image library so Python doesn't fail building it.
+# 1. Install System Tools & Build Dependencies
+# Removed 'python3', 'py3-pip' as the runner image provides these.
+# Kept 'py3-pillow' as it often relies on system-level jpeg/zlib libraries.
 RUN apk add --no-cache \
     curl \
     poppler-utils \
@@ -15,20 +16,18 @@ RUN apk add --no-cache \
     jpeg-dev \
     pango-dev \
     giflib-dev \
-    python3 \
-    py3-pip \
     py3-pillow \
     tesseract-ocr \
     tesseract-ocr-data-eng \
     tesseract-ocr-data-spa
 
 # 2. Install NPM packages globally
-# This keeps your Javascript tools available
+# The runner handles Node execution, so these must be installed here.
 RUN npm install -g pdf-lib pdf-img-convert pdf-parse tesseract.js
 
-# 3. Install the Python Libraries
-# We use --break-system-packages to allow installing globally
-RUN pip3 install markitdown --break-system-packages
+# 3. Install Python Libraries
+# Use the pip provided by the runner environment
+RUN pip install markitdown --break-system-packages
 
-# Switch back to node user
+# Switch back to the limited user
 USER node

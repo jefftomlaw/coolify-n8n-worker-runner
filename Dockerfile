@@ -1,4 +1,4 @@
-FROM n8nio/runners:latest
+FROM n8nio/runners:1.121.0
 
 USER root
 
@@ -30,9 +30,7 @@ RUN apk add --no-cache \
     # 4. Clean up build dependencies
     && apk del .build-deps
 
-COPY n8n-task-runners.json /etc/n8n-task-runners.json
-
-# 5. Fix permissions (files installed by root must be owned by runner)
+# 2. Fix permissions (files installed by root must be owned by runner)
 RUN chown -R runner:runner /opt/runners
 
 USER runner

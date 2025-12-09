@@ -13,18 +13,20 @@ services:
       - WEBHOOK_URL=${SERVICE_URL_N8N}
       - N8N_HOST=${SERVICE_URL_N8N}
       
-      # Database Connection
+      # Database Connection (External)
       - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=postgresql
-      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_HOST=${POSTGRES_HOST}
+      - DB_POSTGRESDB_PORT=${POSTGRES_PORT:-5432}
       - DB_POSTGRESDB_DATABASE=${POSTGRES_DB:-n8n}
       - DB_POSTGRESDB_USER=${POSTGRES_USER:-n8n}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
       
-      # Queue Mode Configuration (No Password for Internal Stability)
+      # Queue Mode Configuration (External Redis with User/Pass)
       - EXECUTIONS_MODE=queue
-      - QUEUE_BULL_REDIS_HOST=redis
-      - QUEUE_BULL_REDIS_PORT=6379
+      - QUEUE_BULL_REDIS_HOST=${REDIS_HOST}
+      - QUEUE_BULL_REDIS_PORT=${REDIS_PORT:-6379}
+      - QUEUE_BULL_REDIS_USERNAME=${REDIS_USER}   # Added Redis Username
+      - QUEUE_BULL_REDIS_PASSWORD=${REDIS_PASSWORD}
       - QUEUE_HEALTH_CHECK_ACTIVE=true
       
       # Performance & Scaling
@@ -43,12 +45,7 @@ services:
       
     volumes:
       - n8n-data:/home/node/.n8n
-    depends_on:
-      redis:
-        condition: service_healthy
-      postgresql:
-        condition: service_healthy
-    # Relaxed Health Check (Prevents restarts during heavy load)
+    # Relaxed Health Check
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://127.0.0.1:5678/healthz || exit 1"]
       interval: 10s
@@ -65,20 +62,23 @@ services:
     restart: always
     environment:
       - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=postgresql
-      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_HOST=${POSTGRES_HOST}
+      - DB_POSTGRESDB_PORT=${POSTGRES_PORT:-5432}
       - DB_POSTGRESDB_DATABASE=${POSTGRES_DB:-n8n}
       - DB_POSTGRESDB_USER=${POSTGRES_USER:-n8n}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
       
+      # Queue Mode Configuration (External Redis with User/Pass)
       - EXECUTIONS_MODE=queue
-      - QUEUE_BULL_REDIS_HOST=redis
-      - QUEUE_BULL_REDIS_PORT=6379
+      - QUEUE_BULL_REDIS_HOST=${REDIS_HOST}
+      - QUEUE_BULL_REDIS_PORT=${REDIS_PORT:-6379}
+      - QUEUE_BULL_REDIS_USERNAME=${REDIS_USER}   # Added Redis Username
+      - QUEUE_BULL_REDIS_PASSWORD=${REDIS_PASSWORD}
       - QUEUE_HEALTH_CHECK_ACTIVE=true
       
       - N8N_ENCRYPTION_KEY=${SERVICE_PASSWORD_ENCRYPTION}
       
-      # Concurrency Control (Defaults to 50 if variable not set)
+      # Concurrency Control
       - N8N_CONCURRENCY_PRODUCTION_LIMIT=${N8N_CONCURRENCY_PRODUCTION_LIMIT:-50}
       
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-America/Chicago}
@@ -90,10 +90,6 @@ services:
       - n8n-data:/home/node/.n8n
     depends_on:
       n8n:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      postgresql:
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://127.0.0.1:5678/healthz || exit 1"]
@@ -110,17 +106,19 @@ services:
     command: worker
     restart: always
     environment:
-      # Exact same config as Worker 1
       - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=postgresql
-      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_HOST=${POSTGRES_HOST}
+      - DB_POSTGRESDB_PORT=${POSTGRES_PORT:-5432}
       - DB_POSTGRESDB_DATABASE=${POSTGRES_DB:-n8n}
       - DB_POSTGRESDB_USER=${POSTGRES_USER:-n8n}
       - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
       
+      # Queue Mode Configuration (External Redis with User/Pass)
       - EXECUTIONS_MODE=queue
-      - QUEUE_BULL_REDIS_HOST=redis
-      - QUEUE_BULL_REDIS_PORT=6379
+      - QUEUE_BULL_REDIS_HOST=${REDIS_HOST}
+      - QUEUE_BULL_REDIS_PORT=${REDIS_PORT:-6379}
+      - QUEUE_BULL_REDIS_USERNAME=${REDIS_USER}   # Added Redis Username
+      - QUEUE_BULL_REDIS_PASSWORD=${REDIS_PASSWORD}
       - QUEUE_HEALTH_CHECK_ACTIVE=true
       
       - N8N_ENCRYPTION_KEY=${SERVICE_PASSWORD_ENCRYPTION}
@@ -135,10 +133,6 @@ services:
     depends_on:
       n8n:
         condition: service_healthy
-      redis:
-        condition: service_healthy
-      postgresql:
-        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://127.0.0.1:5678/healthz || exit 1"]
       interval: 15s
@@ -146,42 +140,5 @@ services:
       retries: 10
       start_period: 60s
 
-  # ----------------------------------------
-  # 4. Redis (Standard)
-  # ----------------------------------------
-  redis:
-    image: redis:6-alpine
-    restart: always
-    command: redis-server --appendonly yes
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
-  # ----------------------------------------
-  # 5. PostgreSQL (Standard)
-  # ----------------------------------------
-  postgresql:
-    image: postgres:16-alpine
-    restart: always
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER:-n8n}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB:-n8n}
-      - TZ=America/Chicago
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -h localhost -U n8n"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 10s
-
 volumes:
   n8n-data:
-  redis-data:
-  postgres-data:

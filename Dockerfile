@@ -1,35 +1,38 @@
-FROM n8nio/runners
+FROM n8nio/runners:latest
 
 USER root
 
-# 1. Install System Tools, Build Dependencies & Package Managers
-# Added 'nodejs' and 'npm' explicitly so we can install global packages.
-# Added 'python3' and 'py3-pip' to ensure pip is available for step 3.
+# 1. Install Dependencies & Build Libraries
+# We combine everything into one RUN command to keep the image layer small.
 RUN apk add --no-cache \
-    curl \
-    poppler-utils \
-    graphicsmagick \
+    # Runtime libraries for PDF/Image processing (required by canvas & tesseract)
+    cairo \
+    pango \
+    libjpeg-turbo \
+    giflib \
+    tesseract-ocr \
+    tesseract-ocr-data-eng \
+    # Build dependencies (compilers/headers needed to install node-canvas)
+    && apk add --no-cache --virtual .build-deps \
     build-base \
     g++ \
     cairo-dev \
     jpeg-dev \
     pango-dev \
     giflib-dev \
-    py3-pillow \
-    tesseract-ocr \
-    tesseract-ocr-data-eng \
-    tesseract-ocr-data-spa \
-    nodejs \
-    npm \
-    python3 \
-    py3-pip
+    python3-dev \
+    # 2. Install JavaScript Packages
+    && cd /opt/runners/task-runner-javascript \
+    && pnpm add pdf-lib pdf-img-convert pdf-parse \
+    # 3. Install Python Libraries
+    && cd /opt/runners/task-runner-python \
+    && uv pip install markitdown pytesseract Pillow \
+    # 4. Clean up build dependencies
+    && apk del .build-deps
 
-# 2. Install NPM packages globally
-RUN npm install -g pdf-lib pdf-img-convert pdf-parse tesseract.js
+COPY n8n-task-runners.json /etc/n8n-task-runners.json
 
-# 3. Install the Python Libraries
-# using pip3 to match the apk installed python
-RUN pip3 install markitdown --break-system-packages
+# 5. Fix permissions (files installed by root must be owned by runner)
+RUN chown -R runner:runner /opt/runners
 
-# Switch back to node user
-USER node
+USER runner

@@ -1,5 +1,5 @@
 # 1. Use 'next' to match your Beta Worker (v2.0 Protocol)
-FROM n8nio/runners:beta
+FROM n8nio/runners:stable
 
 USER root
 

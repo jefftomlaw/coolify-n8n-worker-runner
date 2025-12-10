@@ -31,6 +31,7 @@ services:
       - N8N_LOG_LEVEL=debug
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       - N8N_GIT_NODE_DISABLE_BARE_REPOS=true
+      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
     ports:
       - "5679:5679"
     volumes:

@@ -49,6 +49,8 @@ services:
     image: 'n8nio/runners:stable'
     restart: always
     environment:
+      - N8N_RUNNERS_ENABLED=true
+      - N8N_RUNNERS_MODE=external
       # REQUIRED: Must match the token in your main n8n instance
       - N8N_RUNNERS_AUTH_TOKEN=${RUNNER_AUTH_TOKEN}
       

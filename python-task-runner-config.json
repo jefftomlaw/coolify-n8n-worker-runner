@@ -5,7 +5,6 @@
       "dir": "/usr/local/bin/task-runner-launcher",
       "health-check-server-port": "5681",
       "env-overrides": {
-        "PYTHONPATH": "/opt/runners/task-runner-python",
         "N8N_RUNNERS_EXTERNAL_ALLOW": "pytesseract,pdf2image,Pillow"
       }
     }

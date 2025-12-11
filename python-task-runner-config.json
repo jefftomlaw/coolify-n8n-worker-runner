@@ -2,6 +2,7 @@
   "task-runners": [
     {
       "runner-type": "python",
+      "dir": "/opt/runners/task-runner-python",
       "health-check-server-port": "5681",
       "env-overrides": {
         "PYTHONPATH": "/opt/runners/task-runner-python",

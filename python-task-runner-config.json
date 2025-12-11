@@ -2,7 +2,7 @@
   "task-runners": [
     {
       "runner-type": "python",
-      "health-check-server-port": "5680",
+      "health-check-server-port": "5681",
       "workdir": "/home/runner",
       "command": "/opt/runners/task-runner-python/.venv/bin/python",
       "args": [
@@ -16,7 +16,7 @@
     },
     {
       "runner-type": "javascript",
-      "health-check-server-port": "5681",
+      "health-check-server-port": "5682",
       "workdir": "/home/runner",
       "command": "node",
       "args": [

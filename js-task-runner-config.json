@@ -1,18 +1,18 @@
 {
   "task-runners": [
     {
-      "runner-type": "javascript",
-			"command": "/usr/local/bin/node",
-			"args": [
-				"--disallow-code-generation-from-strings",
-				"--disable-proto=delete",
-				"/opt/runners/task-runner-javascript/dist/start.js"
-			],
-      "workdir": "/home/runner",
-      "health-check-server-port": "5682",
-      "env-overrides": {
-        "NODE_FUNCTION_ALLOW_EXTERNAL": "pdf-lib,pdf-img-convert,pdf-parse"
-      }
+	"runner-type": "javascript",
+	"command": "/usr/local/bin/node",
+	"args": [
+		"--disallow-code-generation-from-strings",
+		"--disable-proto=delete",
+		"/opt/runners/task-runner-javascript/dist/start.js"
+	],
+	"workdir": "/home/runner",
+	"health-check-server-port": "5682",
+	"env-overrides": {
+		"NODE_FUNCTION_ALLOW_EXTERNAL": "pdf-lib,pdf-img-convert,pdf-parse"
+    }
     }
   ]
 }

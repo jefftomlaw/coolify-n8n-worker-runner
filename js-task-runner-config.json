@@ -5,7 +5,6 @@
       "dir": "/usr/local/bin/task-runner-launcher",
       "health-check-server-port": "5682",
       "env-overrides": {
-        "NODE_OPTIONS": "--enable-source-maps",
         "NODE_FUNCTION_ALLOW_EXTERNAL": "pdf-lib,pdf-img-convert,pdf-parse"
       }
     }

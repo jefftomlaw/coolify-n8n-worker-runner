@@ -1,20 +1,12 @@
 # Dockerfile.python
 
-# --------------------------------------------------------
 # 1. Source Stage: Grab artifacts from the official runner
-# --------------------------------------------------------
-# We use the generic tag so Docker picks the right arch (x86 or ARM) for your Ubuntu server automatically.
-FROM n8nio/runners:beta AS source
+FROM n8nio/runners:2.1.0 AS source
 
-# --------------------------------------------------------
-# 2. Build Stage: Use Alpine Linux (Matches n8n runner OS)
-# --------------------------------------------------------
-# We use python:3.11-alpine because n8n runners are built on Alpine/Wolfi.
-# This ensures the 'task-runner' binary works correctly.
+# 2. Build Stage: Use Alpine Linux
 FROM python:3.11-alpine
 
 # 2a. Install System Dependencies
-# Now 'apk' works because we are on a full Alpine OS.
 RUN apk add --no-cache \
     tesseract-ocr \
     tesseract-ocr-data-eng \
@@ -26,23 +18,31 @@ RUN apk add --no-cache \
     shadow
 
 # 2b. Setup the Runner User
-# n8n requires a user named 'runner' with UID 1000
 RUN adduser -D -u 1000 runner
 
 # 2c. Copy n8n Runner Artifacts
-# We copy the task runner binary and python environment from the official image
+# We copy the runner code, but we know the .venv inside is broken
 COPY --from=source --chown=runner:runner /opt/runners /opt/runners
 
-# 2d. Install Python Libraries
+# 2d. Switch to Runner User
 USER runner
 
-# We install your libraries into the EXISTING virtual environment from n8n.
-# We call the pip binary directly to avoid path issues.
-RUN /opt/runners/task-runner-python/.venv/bin/pip install \
+# 2e. REBUILD THE VIRTUAL ENVIRONMENT
+# 1. Delete the broken venv copied from the source
+# 2. Create a new fresh venv using the Alpine python
+# 3. Upgrade pip in the new venv
+RUN rm -rf /opt/runners/task-runner-python/.venv \
+    && python -m venv /opt/runners/task-runner-python/.venv \
+    && /opt/runners/task-runner-python/.venv/bin/pip install --no-cache-dir --upgrade pip
+
+# 2f. Install Dependencies
+# We install your required libs into the NEW venv.
+# We also include 'requests' as it's a common dependency for runners, just in case.
+RUN /opt/runners/task-runner-python/.venv/bin/pip install --no-cache-dir \
     pytesseract \
     pdf2image \
-    Pillow
+    Pillow \
+    requests
 
-# 2e. Set Entrypoint
-# This points to the binary we copied from the source image.
+# 2g. Set Entrypoint
 ENTRYPOINT ["/opt/runners/task-runner-python/bin/task-runner"]

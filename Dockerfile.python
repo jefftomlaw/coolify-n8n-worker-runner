@@ -1,5 +1,5 @@
 # Use the official runner image as the base (Debian-based)
-FROM n8nio/runners:2.1.0
+FROM n8nio/runners:beta
 
 USER root
 

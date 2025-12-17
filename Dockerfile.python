@@ -1,48 +1,25 @@
-# Dockerfile.python
+# Use the official runner image as the base (Debian-based)
+FROM n8nio/runners:2.1.0
 
-# 1. Source Stage: Grab artifacts from the official runner
-FROM n8nio/runners:2.1.0 AS source
+USER root
 
-# 2. Build Stage: Use Alpine Linux
-FROM python:3.11-alpine
-
-# 2a. Install System Dependencies
-RUN apk add --no-cache \
+# Install system dependencies using apt-get
+RUN apt-get update && apt-get install -y \
     tesseract-ocr \
-    tesseract-ocr-data-eng \
+    libtesseract-dev \
     poppler-utils \
-    jpeg-dev \
-    zlib-dev \
-    build-base \
+    libjpeg-dev \
+    zlib1g-dev \
+    build-essential \
     python3-dev \
-    shadow
+    && rm -rf /var/lib/apt/lists/*
 
-# 2b. Setup the Runner User
-RUN adduser -D -u 1000 runner
-
-# 2c. Copy n8n Runner Artifacts
-# We copy the runner code, but we know the .venv inside is broken
-COPY --from=source --chown=runner:runner /opt/runners /opt/runners
-
-# 2d. Switch to Runner User
-USER runner
-
-# 2e. REBUILD THE VIRTUAL ENVIRONMENT
-# 1. Delete the broken venv copied from the source
-# 2. Create a new fresh venv using the Alpine python
-# 3. Upgrade pip in the new venv
-RUN rm -rf /opt/runners/task-runner-python/.venv \
-    && python -m venv /opt/runners/task-runner-python/.venv \
-    && /opt/runners/task-runner-python/.venv/bin/pip install --no-cache-dir --upgrade pip
-
-# 2f. Install Dependencies
-# We install your required libs into the NEW venv.
-# We also include 'requests' as it's a common dependency for runners, just in case.
+# Install your Python libraries into the existing runner venv
 RUN /opt/runners/task-runner-python/.venv/bin/pip install --no-cache-dir \
     pytesseract \
     pdf2image \
     Pillow \
     requests
 
-# 2g. Set Entrypoint
-ENTRYPOINT ["/opt/runners/task-runner-python/bin/task-runner"]
+USER runner
+# No ENTRYPOINT needed; it is inherited from the base image

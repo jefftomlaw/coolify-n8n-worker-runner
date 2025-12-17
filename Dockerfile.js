@@ -1,5 +1,5 @@
 # Dockerfile.js
-FROM n8nio/runners:beta
+FROM n8nio/runners:2.1.1
 
 USER root
 

@@ -36,6 +36,8 @@ services:
       - N8N_BLOCK_ENV_ACCESS_IN_NODE=false
       - N8N_GIT_NODE_DISABLE_BARE_REPOS=true
       - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=true
+      - QUEUE_HEALTH_CHECK_ACTIVE=true
+      - N8N_PORT=5678
       
       # Timezone
       - 'GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-America/Chicago}'
@@ -45,10 +47,11 @@ services:
     volumes:
       - 'n8n_worker_data:/home/node/.n8n'
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 5679 || exit 1"]
+      # The worker health check server typically listens on port 5678 by default
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
       interval: 15s
-      timeout: 30s
-      retries: 10
+      timeout: 10s
+      retries: 5
       start_period: 60s
 
   runner-js:
@@ -69,11 +72,11 @@ services:
     depends_on:
       -  n8n-worker
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:5681/ || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5680/healthz || exit 1"]
       interval: 10s
       timeout: 10s
       retries: 5
-      start_period: 10s
+      start_period: 30s # Increased for safety
 
   runner-python:
     build:
@@ -93,11 +96,11 @@ services:
     depends_on:
       -  n8n-worker
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:5682/ || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5680/healthz || exit 1"]
       interval: 10s
       timeout: 10s
       retries: 5
-      start_period: 10s
+      start_period: 30s # Increased for safety
 
 volumes:
   n8n_worker_data: null

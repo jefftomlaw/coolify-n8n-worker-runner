@@ -7,6 +7,7 @@ services:
     restart: always
     environment:
       # Standard Worker Config
+      - N8N_DEFAULT_BINARY_DATA_MODE=database
       - 'N8N_ENCRYPTION_KEY=${SERVICE_PASSWORD_ENCRYPTION}'
       - EXECUTIONS_MODE=queue
       
@@ -64,6 +65,10 @@ services:
     restart: always
     environment:
       - N8N_RUNNERS_RUNNER_TYPE=javascript
+      - N8N_DEFAULT_BINARY_DATA_MODE=database
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=48
+      - EXECUTIONS_DATA_PRUNE_MAX_COUNT=1000
       - 'N8N_RUNNERS_TASK_BROKER_URI=${N8N_RUNNERS_TASK_BROKER_URI:-http://n8n-worker:5679}'
       - N8N_RUNNERS_AUTH_TOKEN=${RUNNER_AUTH_TOKEN}
       - N8N_LOG_LEVEL=debug
@@ -90,6 +95,7 @@ services:
     restart: always
     environment:      
       - N8N_RUNNERS_RUNNER_TYPE=python
+      - N8N_DEFAULT_BINARY_DATA_MODE=database
       - 'N8N_RUNNERS_TASK_BROKER_URI=${N8N_RUNNERS_TASK_BROKER_URI:-http://n8n-worker:5679}'
       - N8N_RUNNERS_AUTH_TOKEN=${RUNNER_AUTH_TOKEN}
       - 'N8N_LOG_LEVEL=${N8N_LOG_LEVEL:-info}'
